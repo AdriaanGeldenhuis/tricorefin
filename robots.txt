@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tricorefin.co.za/sitemap.xml
