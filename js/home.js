@@ -28,9 +28,11 @@
     var notes = story ? story.querySelectorAll('.sc-note') : [];
     var currentStage = -1;
 
-    if (story && reduceMotion) {
-        story.classList.add('is-static');
+    // Short screens (landscape phones) can't fit the pinned story, so it falls back to a normal stacked layout.
+    function syncStoryMode() {
+        if (story) story.classList.toggle('is-static', reduceMotion || window.innerHeight < 600);
     }
+    syncStoryMode();
 
     function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
 
@@ -80,7 +82,7 @@
         window.addEventListener('scroll', function () {
             if (!ticking) { window.requestAnimationFrame(onScroll); ticking = true; }
         }, { passive: true });
-        window.addEventListener('resize', onScroll);
+        window.addEventListener('resize', function () { syncStoryMode(); onScroll(); });
         onScroll();
     }
 

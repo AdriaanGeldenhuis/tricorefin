@@ -53,9 +53,7 @@ require __DIR__ . '/includes/header.php';
                 <p class="lead">Audit, accounting and advisory expertise designed to strengthen compliance, improve financial visibility and support better business decisions.</p>
 
                 <div class="hero-actions">
-                    <a class="btn btn-gold" href="#services">Explore our services
-                        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 7h10M8 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </a>
+                    <a class="btn btn-gold" href="#services"><span class="btn-label">Explore our services</span><span class="btn-ico btn-ico-arrow" aria-hidden="true"></span></a>
                     <a class="btn btn-line" href="#contact">Speak to our team</a>
                 </div>
             </div>
@@ -227,7 +225,7 @@ require __DIR__ . '/includes/header.php';
     </section>
 
     <!-- ============ SCROLL STORY ============ -->
-    <section class="story" id="insight" aria-labelledby="storyTitle">
+    <section class="story" id="insight" data-hide-cta aria-labelledby="storyTitle">
         <div class="story-sticky">
             <div class="container story-grid">
                 <div class="story-copy">
@@ -369,12 +367,12 @@ require __DIR__ . '/includes/header.php';
     </section>
 
     <!-- ============ CTA ============ -->
-    <section class="cta" aria-labelledby="ctaTitle">
+    <section class="cta" aria-labelledby="ctaTitle" data-hide-cta>
         <div class="container cta-inner reveal">
             <h2 id="ctaTitle">Better financial decisions<br><em>start with better information.</em></h2>
             <p>Speak to Tri-Core Financial Group about your accounting, assurance and advisory requirements.</p>
             <div class="cta-actions">
-                <a class="btn btn-gold" href="#contact">Arrange a consultation</a>
+                <a class="btn btn-gold" href="#contact"><span class="btn-label">Arrange a consultation</span></a>
                 <span class="hand cta-hand" aria-hidden="true">let's talk
                     <svg class="ink ink-under" viewBox="0 0 160 16" preserveAspectRatio="none"><path pathLength="1" d="M3 10 C 40 4, 100 4, 156 9"/></svg>
                 </span>
@@ -383,7 +381,7 @@ require __DIR__ . '/includes/header.php';
     </section>
 
     <!-- ============ CONTACT ============ -->
-    <section class="section contact" id="contact" aria-labelledby="contactTitle">
+    <section class="section contact" id="contact" data-hide-cta aria-labelledby="contactTitle">
         <div class="container contact-grid">
             <div class="contact-panel reveal">
                 <p class="eyebrow">Start a conversation</p>
@@ -442,7 +440,7 @@ require __DIR__ . '/includes/header.php';
                             <label for="fConsent">I agree that Tri-Core may use these details to respond to my enquiry.</label>
                         </div>
                         <div class="field full">
-                            <button class="btn btn-gold btn-block" type="submit">Send enquiry</button>
+                            <button class="btn btn-gold btn-block" type="submit"><span class="btn-label">Send enquiry</span></button>
                         </div>
                     </div>
                     <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>

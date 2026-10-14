@@ -11,10 +11,13 @@
     /* ---------- Theme ---------- */
     var themeToggle = document.getElementById('themeToggle');
 
+    var themeMeta = document.querySelector('meta[name="theme-color"]');
+
     function syncThemeLabel() {
+        var isDark = root.getAttribute('data-theme') === 'dark';
+        if (themeMeta) themeMeta.setAttribute('content', isDark ? '#07111f' : '#f6f5f1');
         if (!themeToggle) return;
-        var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        themeToggle.setAttribute('aria-label', 'Switch to ' + next + ' mode');
+        themeToggle.setAttribute('aria-label', 'Switch to ' + (isDark ? 'light' : 'dark') + ' mode');
     }
 
     if (themeToggle) {
@@ -30,7 +33,7 @@
     /* ---------- Header state ---------- */
     var header = document.getElementById('siteHeader');
     var mobileCta = document.getElementById('mobileCta');
-    var contact = document.getElementById('contact');
+    var ctaZones = document.querySelectorAll('[data-hide-cta]');
     var ticking = false;
 
     function onScroll() {
@@ -39,12 +42,13 @@
 
         if (mobileCta) {
             var pastHero = y > window.innerHeight * 0.8;
-            var nearContact = false;
-            if (contact) {
-                var r = contact.getBoundingClientRect();
-                nearContact = r.top < window.innerHeight && r.bottom > 0;
+            // The floating button steps aside where the page already makes its own call to action.
+            var inZone = false;
+            for (var i = 0; i < ctaZones.length; i++) {
+                var r = ctaZones[i].getBoundingClientRect();
+                if (r.top < window.innerHeight && r.bottom > 0) { inZone = true; break; }
             }
-            var show = pastHero && !nearContact;
+            var show = pastHero && !inZone;
             mobileCta.classList.toggle('is-shown', show);
             mobileCta.setAttribute('aria-hidden', show ? 'false' : 'true');
             mobileCta.tabIndex = show ? 0 : -1;
