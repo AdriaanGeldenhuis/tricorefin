@@ -16,12 +16,15 @@ $canonical       = rtrim($site['url'], '/') . ($page['path'] ?? '/');
 <html lang="en-ZA" data-theme="dark">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($pageTitle) ?></title>
     <meta name="description" content="<?= e($pageDescription) ?>">
     <link rel="canonical" href="<?= e($canonical) ?>">
-    <meta name="theme-color" content="#07111f" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
+    <!-- The page ships its own dark and light themes. Declaring that stops phone browsers
+         (Samsung Internet, Chrome "force dark") from re-colouring the page on top of ours. -->
+    <meta name="color-scheme" content="dark light">
+    <meta name="supported-color-schemes" content="dark light">
+    <meta name="theme-color" content="#07111f">
 
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="<?= e($site['name']) ?>">
@@ -41,15 +44,17 @@ $canonical       = rtrim($site['url'], '/') . ($page['path'] ?? '/');
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;600;700&display=swap">
 
     <script>
-        // Apply the saved / OS theme before first paint to avoid a flash.
+        // Apply the saved theme before first paint to avoid a flash. Dark is the default look;
+        // visitors who switch to light keep that choice on later visits.
         (function () {
             var t = null;
             try { t = localStorage.getItem('tricore-theme'); } catch (err) {}
-            if (t !== 'light' && t !== 'dark') {
-                t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-            }
-            document.documentElement.setAttribute('data-theme', t);
-            document.documentElement.classList.add('js');
+            if (t !== 'light' && t !== 'dark') { t = 'dark'; }
+            var root = document.documentElement;
+            root.setAttribute('data-theme', t);
+            root.classList.add('js');
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) { meta.setAttribute('content', t === 'dark' ? '#07111f' : '#f6f5f1'); }
         })();
     </script>
 
@@ -79,7 +84,7 @@ $canonical       = rtrim($site['url'], '/') . ($page['path'] ?? '/');
         <a class="brand" href="/" aria-label="<?= e($site['name']) ?> — home">
             <img class="brand-mark" src="/assets/img/tricore-emblem.webp" width="300" height="240" alt="">
             <span class="brand-text">
-                <strong>TRI-CORE</strong>
+                <strong><span class="b-tri">TRI-</span><span class="b-core">CORE</span></strong>
                 <small>Financial Group</small>
             </span>
         </a>
@@ -119,7 +124,7 @@ $canonical       = rtrim($site['url'], '/') . ($page['path'] ?? '/');
                 <li><a href="/#approach">Approach</a></li>
                 <li><a href="/#contact">Contact</a></li>
             </ul>
-            <a class="btn btn-gold nav-mobile-cta" href="/#contact">Book a consultation</a>
+            <a class="btn btn-gold nav-mobile-cta" href="/#contact"><span class="btn-label">Book a consultation</span></a>
         </nav>
 
         <div class="nav-actions">
@@ -127,9 +132,9 @@ $canonical       = rtrim($site['url'], '/') . ($page['path'] ?? '/');
                 <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.6A8.2 8.2 0 0 1 9.4 4a8.2 8.2 0 1 0 10.6 10.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
             </button>
-            <a class="btn btn-gold nav-cta" href="/#contact">Book a consultation</a>
+            <a class="btn btn-gold nav-cta" href="/#contact"><span class="btn-label">Book a consultation</span></a>
             <button class="icon-btn menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="primaryNav">
-                <span class="burger" aria-hidden="true"><i></i><i></i></span>
+                <svg class="burger" width="20" height="12" viewBox="0 0 20 12" aria-hidden="true"><path class="bar-1" d="M1 2h18"/><path class="bar-2" d="M1 10h18"/></svg>
             </button>
         </div>
     </div>

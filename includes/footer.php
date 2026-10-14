@@ -5,14 +5,14 @@ declare(strict_types=1);
  * Shared site footer + scripts. Expects $site and $page (see header.php).
  */
 ?>
-<footer class="site-footer">
+<footer class="site-footer" data-hide-cta>
     <div class="container">
         <div class="footer-top">
             <div class="footer-brand">
                 <a class="brand brand-lg" href="/" aria-label="<?= e($site['name']) ?> — home">
                     <img class="brand-mark" src="/assets/img/tricore-emblem.webp" width="300" height="240" alt="" loading="lazy">
                     <span class="brand-text">
-                        <strong>TRI-CORE</strong>
+                        <strong><span class="b-tri">TRI-</span><span class="b-core">CORE</span></strong>
                         <small>Financial Group</small>
                     </span>
                 </a>
@@ -54,8 +54,7 @@ declare(strict_types=1);
 </footer>
 
 <a class="mobile-cta" id="mobileCta" href="/#contact" aria-hidden="true" tabindex="-1">
-    Book a consultation
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 11L11 3M5 3h6v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="btn-label">Book a consultation</span><span class="btn-ico btn-ico-diag" aria-hidden="true"></span>
 </a>
 
 <script src="<?= asset('/assets/js/site.js', $site) ?>" defer></script>
