@@ -1,8 +1,25 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/includes/helpers.php';
-$site = require __DIR__ . '/config/site.php';
+require __DIR__ . '/includes/bootstrap.php';
+
+start_secure_session();
+$csrfToken = csrf_token();
+$_SESSION['enquiry_started'] = time();   // time trap for the contact form (see api/enquiry.php)
+
+$nonce = base64_encode(random_bytes(16));
+send_page_headers($nonce);
+
+// Result of a form post without JavaScript (api/enquiry.php redirects back with ?enquiry=...).
+$enquiryMessages = [
+    'sent'    => ['success', 'Thank you — your enquiry has been sent. We will be in touch shortly.'],
+    'invalid' => ['error', 'Some details were missing or invalid. Please check the form and try again.'],
+    'expired' => ['error', 'Your session expired. Please send your enquiry again.'],
+    'limit'   => ['error', 'You have sent several enquiries in a short time. Please try again later, or email us directly.'],
+    'failed'  => ['error', 'We could not send your enquiry just now. Please email us directly.'],
+    'error'   => ['error', 'Something went wrong. Please try again, or email us directly.'],
+];
+$enquiryResult = $enquiryMessages[(string) ($_GET['enquiry'] ?? '')] ?? null;
 
 $page = [
     'title'       => 'Tri-Core Financial Group | Audit, Accounting & Advisory',
@@ -69,7 +86,7 @@ require __DIR__ . '/includes/header.php';
                     <div class="ledger-rows">
                         <div class="ledger-row" data-row="1">
                             <span class="l-label">Revenue</span>
-                            <span class="l-bar"><i style="--w:82%"></i></span>
+                            <span class="l-bar"><i></i></span>
                             <span class="l-val">R 4 820k</span>
                             <span class="note note-tick hand hand-write" aria-hidden="true">
                                 <svg class="ink" viewBox="0 0 30 26"><path pathLength="1" d="M3 14 L11 22 L27 4"/></svg>
@@ -78,26 +95,26 @@ require __DIR__ . '/includes/header.php';
                         </div>
                         <div class="ledger-row" data-row="2">
                             <span class="l-label">Gross margin</span>
-                            <span class="l-bar"><i style="--w:58%"></i></span>
+                            <span class="l-bar"><i></i></span>
                             <span class="l-val l-underline">38.4%
                                 <svg class="ink ink-under" viewBox="0 0 120 14" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M3 9 C 30 3, 70 4, 92 7 S 114 10, 117 5"/></svg>
                             </span>
                         </div>
                         <div class="ledger-row" data-row="3">
                             <span class="l-label">Operating costs</span>
-                            <span class="l-bar"><i style="--w:46%"></i></span>
+                            <span class="l-bar"><i></i></span>
                             <span class="l-val">R 1 260k</span>
                         </div>
                         <div class="ledger-row" data-row="4">
                             <span class="l-label">Debtor days</span>
-                            <span class="l-bar"><i style="--w:74%" class="warn"></i></span>
+                            <span class="l-bar"><i class="warn"></i></span>
                             <span class="l-val l-circle">74
                                 <svg class="ink ink-ring" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M58 6 C 26 2, 4 14, 5 32 C 6 52, 44 58, 70 54 C 92 50, 98 34, 92 20 C 86 8, 62 2, 40 8"/></svg>
                             </span>
                         </div>
                         <div class="ledger-row" data-row="5">
                             <span class="l-label">Cash runway</span>
-                            <span class="l-bar"><i style="--w:38%"></i></span>
+                            <span class="l-bar"><i></i></span>
                             <span class="l-val">5.2 mo</span>
                         </div>
                     </div>
@@ -263,10 +280,10 @@ require __DIR__ . '/includes/header.php';
                             <circle cx="170" cy="300" r="6"/><circle cx="300" cy="250" r="6"/><circle cx="440" cy="160" r="6"/><circle cx="570" cy="64" r="6"/>
                         </g>
                     </svg>
-                    <span class="sc-note hand" style="--x:28.3%;--y:75%">compliant ✓</span>
-                    <span class="sc-note hand" style="--x:50%;--y:62.5%">now it reads clearly</span>
-                    <span class="sc-note hand" style="--x:73.3%;--y:40%">risk spotted early</span>
-                    <span class="sc-note hand" style="--x:95%;--y:16%">room to grow ↗</span>
+                    <span class="sc-note hand" data-note="1">compliant ✓</span>
+                    <span class="sc-note hand" data-note="2">now it reads clearly</span>
+                    <span class="sc-note hand" data-note="3">risk spotted early</span>
+                    <span class="sc-note hand" data-note="4">room to grow ↗</span>
                 </div>
             </div>
         </div>
@@ -403,7 +420,13 @@ require __DIR__ . '/includes/header.php';
             </div>
 
             <div class="form-panel reveal">
-                <form class="enquiry" id="enquiryForm" novalidate data-email="<?= e($site['emails']['admin']) ?>">
+                <form class="enquiry" id="enquiryForm" method="post" action="/api/enquiry.php" novalidate data-email="<?= e($site['emails']['admin']) ?>">
+                    <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
+                    <!-- Honeypot: hidden from people, irresistible to bots. Leave empty. -->
+                    <div class="hp" aria-hidden="true">
+                        <label for="fWebsite">Website</label>
+                        <input id="fWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+                    </div>
                     <div class="form-grid">
                         <div class="field">
                             <label for="fName">Name</label>
@@ -425,15 +448,14 @@ require __DIR__ . '/includes/header.php';
                             <label for="fService">Service required</label>
                             <select id="fService" name="service" required>
                                 <option value="">Select a service…</option>
-                                <option>Audit &amp; Assurance</option>
-                                <option>Accounting &amp; Tax</option>
-                                <option>Advisory</option>
-                                <option>General enquiry</option>
+<?php foreach ($site['enquiry']['services'] as $service): ?>
+                                <option><?= e($service) ?></option>
+<?php endforeach; ?>
                             </select>
                         </div>
                         <div class="field full">
                             <label for="fMessage">How can we help?</label>
-                            <textarea id="fMessage" name="message" rows="5" maxlength="3000" required></textarea>
+                            <textarea id="fMessage" name="message" rows="5" minlength="10" maxlength="3000" required></textarea>
                         </div>
                         <div class="field full check">
                             <input id="fConsent" name="consent" type="checkbox" required>
@@ -443,7 +465,11 @@ require __DIR__ . '/includes/header.php';
                             <button class="btn btn-gold btn-block" type="submit"><span class="btn-label">Send enquiry</span></button>
                         </div>
                     </div>
+<?php if ($enquiryResult !== null): ?>
+                    <p class="form-status is-<?= e($enquiryResult[0]) ?>" id="formStatus" role="status" aria-live="polite"><?= e($enquiryResult[1]) ?></p>
+<?php else: ?>
                     <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+<?php endif; ?>
                 </form>
             </div>
         </div>

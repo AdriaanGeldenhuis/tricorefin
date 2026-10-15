@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+defined('TRICORE') || exit;
+
 /**
  * Shared site footer + scripts. Expects $site and $page (see header.php).
  */
@@ -10,7 +12,7 @@ declare(strict_types=1);
         <div class="footer-top">
             <div class="footer-brand">
                 <a class="brand brand-lg" href="/" aria-label="<?= e($site['name']) ?> — home">
-                    <img class="brand-mark" src="/assets/img/tricore-emblem.webp" width="300" height="240" alt="" loading="lazy">
+                    <img class="brand-mark" src="/assets/img/tricore-emblem-160.webp" srcset="/assets/img/tricore-emblem-112.webp 112w, /assets/img/tricore-emblem-160.webp 160w" sizes="58px" width="160" height="128" alt="" loading="lazy">
                     <span class="brand-text">
                         <strong><span class="b-tri">TRI-</span><span class="b-core">CORE</span></strong>
                         <small>Financial Group</small>
@@ -43,7 +45,7 @@ declare(strict_types=1);
 
         <div class="footer-bottom">
             <p>&copy; <?= date('Y') ?> <?= e($site['name']) ?>. All rights reserved.</p>
-            <ul class="legal" aria-label="Legal">
+            <ul class="legal">
                 <li>Privacy Policy</li>
                 <li>POPIA</li>
                 <li>PAIA</li>
@@ -57,9 +59,9 @@ declare(strict_types=1);
     <span class="btn-label">Book a consultation</span><span class="btn-ico btn-ico-diag" aria-hidden="true"></span>
 </a>
 
-<script src="<?= asset('/assets/js/site.js', $site) ?>" defer></script>
+<script src="<?= asset('/assets/js/site.js') ?>" defer></script>
 <?php foreach ($page['js'] ?? [] as $js): ?>
-<script src="<?= asset($js, $site) ?>" defer></script>
+<script src="<?= asset($js) ?>" defer></script>
 <?php endforeach; ?>
 </body>
 </html>
