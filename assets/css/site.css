@@ -1,7 +1,41 @@
 /* =========================================================
    Tri-Core Financial Group — shared site styles
-   Tokens, base, header, mega menu, buttons, ink, footer
+   Fonts, tokens, base, header, mega menu, buttons, ink, footer
    ========================================================= */
+
+/* ---------- Self-hosted fonts (Google Fonts, SIL Open Font License 1.1) ---------- */
+@font-face {
+    font-family: "Cormorant Garamond";
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url("../fonts/cormorant-garamond-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: "Cormorant Garamond";
+    font-style: italic;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url("../fonts/cormorant-garamond-italic-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: "Manrope";
+    font-style: normal;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url("../fonts/manrope-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: "Caveat";
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url("../fonts/caveat-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 :root {
     --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, "Times New Roman", serif;
@@ -25,14 +59,16 @@
     --line-strong: rgba(17, 24, 39, .2);
     --text: #111827;
     --muted: #5a6474;
-    --gold: #a47c38;
-    --gold-hi: #c7a15a;
+    --gold: #8c6524;          /* small gold text: 4.8:1 on the page background */
+    --gold-display: #a47c38;  /* large italic headings only (3:1+ is enough at that size) */
+    --gold-hi: #c7a15a;       /* decoration: lines, bars, glows */
     --gold-soft: rgba(164, 124, 56, .1);
-    --ink: #9b6d24;
+    --ink: #8a5f1c;
+    --danger: #b0532f;
     --header-bg: rgba(246, 245, 241, .94);
     --shadow: 0 30px 80px -30px rgba(7, 17, 31, .25);
     --grid: rgba(17, 24, 39, .06);
-    --brand-gold: #a47c38;
+    --brand-gold: #8c6524;
     --brand-silver: #4d5663;
     color-scheme: only light;
 }
@@ -49,9 +85,11 @@
     --text: #e8edf3;
     --muted: #97a3b4;
     --gold: #c7a15a;
+    --gold-display: #e2c27f;
     --gold-hi: #e2c27f;
     --gold-soft: rgba(199, 161, 90, .1);
     --ink: #dbb76f;
+    --danger: #e08a6c;
     --header-bg: rgba(7, 17, 31, .78);
     --shadow: 0 40px 100px -30px rgba(0, 0, 0, .6);
     --grid: rgba(232, 237, 243, .04);
@@ -106,9 +144,7 @@ h1, h2, h3 { text-wrap: balance; }
 p { text-wrap: pretty; }
 h2 { font-size: clamp(2.4rem, 5vw, 4.4rem); }
 h3 { font-size: clamp(1.45rem, 2.2vw, 1.85rem); line-height: 1.15; }
-h1 em, h2 em, h3 em { font-style: italic; color: var(--gold-hi); }
-:root:not([data-theme="dark"]) h1 em,
-:root:not([data-theme="dark"]) h2 em { color: var(--gold); }
+h1 em, h2 em, h3 em { font-style: italic; color: var(--gold-display); }
 
 ::selection { background: var(--gold-hi); color: #07111f; }
 
@@ -430,6 +466,20 @@ h1 em, h2 em, h3 em { font-style: italic; color: var(--gold-hi); }
 /* ---------- Mobile sticky CTA ---------- */
 .mobile-cta { display: none; }
 
+/* ---------- Form honeypot (kept out of sight and out of the tab order) ---------- */
+.hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+
+/* ---------- Simple pages (404, legal pages later) ---------- */
+.simple-page {
+    min-height: 78vh;
+    display: flex; align-items: center;
+    padding: calc(var(--header-h) + 64px) 0 96px;
+}
+.simple-page h1 { margin: 18px 0 20px; font-size: clamp(3rem, 8vw, 6rem); }
+.simple-page p { max-width: 520px; color: var(--muted); font-size: 1.08rem; }
+.simple-page .hand { margin-top: 18px; font-size: 1.8rem; color: var(--ink); transform: rotate(-3deg); width: fit-content; }
+.simple-page .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 36px; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1080px) {
     .nav-list > li > a, .mega-trigger { padding: 10px 10px; }
@@ -449,9 +499,13 @@ h1 em, h2 em, h3 em { font-style: italic; color: var(--gold-hi); }
         overflow-y: auto;
         opacity: 0; visibility: hidden;
         transform: translateY(-8px);
-        transition: opacity .35s var(--ease), transform .35s var(--ease), visibility .35s;
+        /* hide only after the fade-out; show instantly so focus can move into the menu */
+        transition: opacity .35s var(--ease), transform .35s var(--ease), visibility 0s linear .35s;
     }
-    .primary-nav.is-open { opacity: 1; visibility: visible; transform: none; }
+    .primary-nav.is-open {
+        opacity: 1; visibility: visible; transform: none;
+        transition: opacity .35s var(--ease), transform .35s var(--ease), visibility 0s;
+    }
     body.menu-open { overflow: hidden; }
     body.menu-open .site-header { background: var(--bg); border-bottom-color: var(--line); }
 
@@ -501,6 +555,13 @@ h1 em, h2 em, h3 em { font-style: italic; color: var(--gold-hi); }
     .brand-text small { font-size: .52rem; letter-spacing: .28em; }
     .footer-top { grid-template-columns: 1fr; }
     .footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+
+@media print {
+    .site-header, .mobile-cta, .skip-link, .scroll-cue, .hero-bg, .theme-toggle, .menu-toggle { display: none !important; }
+    body { background: #fff; color: #000; }
+    .js .reveal { opacity: 1 !important; transform: none !important; }
+    a[href^="mailto:"]::after { content: ""; }
 }
 
 @media (prefers-reduced-motion: reduce) {

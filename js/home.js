@@ -1,6 +1,6 @@
 /* =========================================================
    Tri-Core Financial Group — homepage behaviour
-   Hero ink, subtle parallax, scroll story, enquiry form
+   Hero ink, subtle parallax, scroll story, enquiry form (posts to /api/enquiry.php)
    ========================================================= */
 (function () {
     'use strict';
@@ -32,7 +32,6 @@
     function syncStoryMode() {
         if (story) story.classList.toggle('is-static', reduceMotion || window.innerHeight < 600);
     }
-    syncStoryMode();
 
     function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
 
@@ -50,8 +49,7 @@
         }
     }
 
-    function updateStory() {
-        var rect = story.getBoundingClientRect();
+    function updateStory(rect) {
         var travel = rect.height - window.innerHeight;
         if (travel <= 0) return;
         var p = clamp(-rect.top / travel, 0, 1);
@@ -70,11 +68,14 @@
 
     var ticking = false;
     function onScroll() {
+        // Read layout first, then write, so the browser never has to recalculate mid-frame.
         var y = window.scrollY || window.pageYOffset;
+        var storyRect = story && !story.classList.contains('is-static') ? story.getBoundingClientRect() : null;
+
         if (arch && y < window.innerHeight * 1.2) {
             arch.style.transform = 'translate3d(0,' + (y * 0.06).toFixed(1) + 'px,0)';
         }
-        if (story && !story.classList.contains('is-static')) updateStory();
+        if (storyRect) updateStory(storyRect);
         ticking = false;
     }
 
@@ -83,8 +84,12 @@
             if (!ticking) { window.requestAnimationFrame(onScroll); ticking = true; }
         }, { passive: true });
         window.addEventListener('resize', function () { syncStoryMode(); onScroll(); });
-        onScroll();
     }
+    // First measurement waits for the next frame, after the initial styles have settled.
+    window.requestAnimationFrame(function () {
+        syncStoryMode();
+        if (!reduceMotion) onScroll();
+    });
 
     /* ---------- "Discuss your requirements" pre-selects the service ---------- */
     var serviceSelect = document.getElementById('fService');
@@ -98,12 +103,12 @@
         });
     });
 
-    /* ---------- Enquiry form (client-side validation) ----------
-       Server-side sending (CSRF, rate limiting, validation) is the next build
-       step. Until then a valid form opens a pre-filled email instead, so no
-       enquiry is silently lost. */
+    /* ---------- Enquiry form ----------
+       Validated here for instant feedback, then sent with fetch() to /api/enquiry.php, which
+       validates everything again. Without JavaScript the form posts there directly. */
     var form = document.getElementById('enquiryForm');
     var statusEl = document.getElementById('formStatus');
+    var directEmail = form ? form.getAttribute('data-email') : '';
 
     function setError(field, message) {
         var wrap = field.closest('.field');
@@ -137,13 +142,35 @@
             msg = 'Please enter a valid email address.';
         } else if (field.type === 'tel' && v && !/^[0-9 +()\-]{7,30}$/.test(v)) {
             msg = 'Please enter a valid telephone number.';
+        } else if (field.name === 'message' && v && v.length < 10) {
+            msg = 'Please add a little more detail (at least 10 characters).';
         }
         setError(field, msg);
         return !msg;
     }
 
-    if (form) {
-        var fields = form.querySelectorAll('input, select, textarea');
+    // Shows a message under the form; failures also offer a direct email link.
+    function showStatus(kind, message, offerEmail) {
+        statusEl.className = 'form-status is-' + kind;
+        statusEl.textContent = message + (offerEmail ? ' ' : '');
+        if (offerEmail && directEmail) {
+            var a = document.createElement('a');
+            a.href = 'mailto:' + directEmail;
+            a.textContent = directEmail;
+            statusEl.appendChild(a);
+        }
+    }
+
+    function setBusy(button, busy) {
+        var label = button.querySelector('.btn-label');
+        button.disabled = busy;
+        button.setAttribute('aria-busy', busy ? 'true' : 'false');
+        if (label) label.textContent = busy ? 'Sending…' : 'Send enquiry';
+    }
+
+    if (form && statusEl) {
+        var fields = form.querySelectorAll('.field input, .field select, .field textarea');
+        var submitBtn = form.querySelector('button[type="submit"]');
 
         fields.forEach(function (f) {
             f.addEventListener('blur', function () { if (f.value || f.type === 'checkbox') validate(f); });
@@ -153,37 +180,49 @@
         });
 
         form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            var ok = true;
             var firstBad = null;
             fields.forEach(function (f) {
-                if (!validate(f)) { ok = false; if (!firstBad) firstBad = f; }
+                if (!validate(f) && !firstBad) firstBad = f;
             });
-            if (!ok) { firstBad.focus(); return; }
+            if (firstBad) { e.preventDefault(); firstBad.focus(); return; }
 
-            var data = new FormData(form);
-            var to = form.getAttribute('data-email');
-            var subject = 'Website enquiry — ' + data.get('service');
-            var body = [
-                'Name: ' + data.get('name'),
-                'Company: ' + (data.get('company') || '-'),
-                'Email: ' + data.get('email'),
-                'Telephone: ' + (data.get('phone') || '-'),
-                'Service: ' + data.get('service'),
-                '',
-                data.get('message')
-            ].join('\n');
-            var href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+            if (!window.fetch || !window.FormData) return;   // let the browser post the form normally
+            e.preventDefault();
 
-            statusEl.innerHTML = '';
-            statusEl.appendChild(document.createTextNode('Thank you. Online submission is being connected — your email app will open with your message ready to send. If it doesn\'t, '));
-            var a = document.createElement('a');
-            a.href = href;
-            a.textContent = 'click here to email ' + to;
-            statusEl.appendChild(a);
-            statusEl.appendChild(document.createTextNode('.'));
+            setBusy(submitBtn, true);
+            statusEl.className = 'form-status';
+            statusEl.textContent = '';
 
-            window.location.href = href;
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            })
+                .then(function (res) {
+                    return res.json().catch(function () { return { ok: false, status: 'error' }; });
+                })
+                .then(function (res) {
+                    if (res.ok) {
+                        form.reset();
+                        showStatus('success', res.message || 'Thank you — your enquiry has been sent.', false);
+                        return;
+                    }
+                    var firstServerBad = null;
+                    Object.keys(res.errors || {}).forEach(function (name) {
+                        var field = form.elements[name];
+                        if (field && field.closest) {
+                            setError(field, res.errors[name]);
+                            if (!firstServerBad) firstServerBad = field;
+                        }
+                    });
+                    if (firstServerBad) firstServerBad.focus();
+                    showStatus('error', res.message || 'Something went wrong.', res.status !== 'invalid');
+                })
+                .catch(function () {
+                    showStatus('error', 'We could not reach the server. Please check your connection, or email us at', true);
+                })
+                .then(function () { setBusy(submitBtn, false); });
         });
     }
 })();

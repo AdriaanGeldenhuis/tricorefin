@@ -5,16 +5,30 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy
   cancel-in-progress: false
+
+env:
+  # Fingerprint of the Xneelo server's ED25519 host key (dedi321.cpt1.host-h.net, port 2222).
+  # The deploy stops if the server presents a different key. If Xneelo ever moves the site to
+  # a new server, update this value from: ssh-keyscan -p 2222 -t ed25519 <host> | ssh-keygen -lf -
+  SSH_HOST_FINGERPRINT: SHA256:rf2PV4wGXEGPH25b4Gh5pvV7MB/qjZIluaXIscDIyq4
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: Check PHP syntax
+        run: |
+          # A syntax error would take the live site down, so it stops the deploy instead.
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
 
       - name: Set up SSH
         env:
@@ -26,7 +40,14 @@ jobs:
           chmod 700 ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
+
+          ssh-keyscan -p "$SSH_PORT" -t ed25519 "$SSH_HOST" > "$RUNNER_TEMP/host_key" 2>/dev/null
+          actual="$(ssh-keygen -lf "$RUNNER_TEMP/host_key" | awk '{print $2}')"
+          if [ "$actual" != "$SSH_HOST_FINGERPRINT" ]; then
+            echo "::error::Server host key does not match the pinned fingerprint (got: ${actual:-none})."
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/host_key" >> ~/.ssh/known_hosts
 
       - name: Upload files
         env:
@@ -36,7 +57,7 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           # Streams the repo as a tar archive over SSH (no rsync needed on the server).
-          # Files already on the server that are not in the repo (uploads, config) are left alone.
+          # Files already on the server that are not in the repo (e.g. config/site.local.php) are left alone.
           tar czf - \
             --exclude='.git' \
             --exclude='.github' \

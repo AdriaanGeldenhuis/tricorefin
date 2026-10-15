@@ -1,12 +1,15 @@
 <?php
 declare(strict_types=1);
 
+defined('TRICORE') || exit;
+
 /**
  * Shared document head + site header.
  *
  * Expects before include:
- *   $site  array  from config/site.php
- *   $page  array  ['title', 'description', 'path', 'css' => [], 'js' => []]
+ *   $site   array   from includes/bootstrap.php
+ *   $nonce  string  CSP nonce sent by send_page_headers()
+ *   $page   array   ['title', 'description', 'path', 'css' => [], 'js' => [], 'noindex' => bool]
  */
 $pageTitle       = $page['title'] ?? $site['name'];
 $pageDescription = $page['description'] ?? $site['description'];
@@ -19,7 +22,11 @@ $canonical       = rtrim($site['url'], '/') . ($page['path'] ?? '/');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($pageTitle) ?></title>
     <meta name="description" content="<?= e($pageDescription) ?>">
+<?php if (!empty($page['noindex'])): ?>
+    <meta name="robots" content="noindex">
+<?php else: ?>
     <link rel="canonical" href="<?= e($canonical) ?>">
+<?php endif; ?>
     <!-- The page ships its own dark and light themes. Declaring that stops phone browsers
          (Samsung Internet, Chrome "force dark") from re-colouring the page on top of ours. -->
     <meta name="color-scheme" content="dark light">
@@ -36,14 +43,16 @@ $canonical       = rtrim($site['url'], '/') . ($page['path'] ?? '/');
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
 
-    <link rel="icon" type="image/png" href="/assets/img/favicon-64.png">
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" href="/assets/img/favicon-64.png" sizes="64x64">
     <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;600;700&display=swap">
+    <!-- Fonts are self-hosted (faster, and no visitor data goes to third parties). -->
+    <link rel="preload" href="/assets/fonts/cormorant-garamond-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 
-    <script>
+    <script nonce="<?= e($nonce) ?>">
         // Apply the saved theme before first paint to avoid a flash. Dark is the default look;
         // visitors who switch to light keep that choice on later visits.
         (function () {
@@ -58,12 +67,12 @@ $canonical       = rtrim($site['url'], '/') . ($page['path'] ?? '/');
         })();
     </script>
 
-    <link rel="stylesheet" href="<?= asset('/assets/css/site.css', $site) ?>">
+    <link rel="stylesheet" href="<?= asset('/assets/css/site.css') ?>">
 <?php foreach ($page['css'] ?? [] as $css): ?>
-    <link rel="stylesheet" href="<?= asset($css, $site) ?>">
+    <link rel="stylesheet" href="<?= asset($css) ?>">
 <?php endforeach; ?>
 
-    <script type="application/ld+json">
+    <script type="application/ld+json" nonce="<?= e($nonce) ?>">
 <?= json_encode([
     '@context'    => 'https://schema.org',
     '@type'       => 'AccountingService',
@@ -82,7 +91,7 @@ $canonical       = rtrim($site['url'], '/') . ($page['path'] ?? '/');
 <header class="site-header" id="siteHeader">
     <div class="container nav">
         <a class="brand" href="/" aria-label="<?= e($site['name']) ?> — home">
-            <img class="brand-mark" src="/assets/img/tricore-emblem.webp" width="300" height="240" alt="">
+            <img class="brand-mark" src="/assets/img/tricore-emblem-112.webp" srcset="/assets/img/tricore-emblem-112.webp 112w, /assets/img/tricore-emblem-160.webp 160w" sizes="44px" width="112" height="90" alt="" fetchpriority="high">
             <span class="brand-text">
                 <strong><span class="b-tri">TRI-</span><span class="b-core">CORE</span></strong>
                 <small>Financial Group</small>
